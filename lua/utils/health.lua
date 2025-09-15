@@ -41,15 +41,16 @@ local function check_executables()
 		"rg",
 		{ "fd", "fdfind" },
 		"lazygit",
-		"nvr", -- formatters / linters
+		"nvr",
 		"stylua",
 		"selene",
 		"shfmt",
 		"black",
-		"jq", -- platform helpers
-		"im-select", -- language specific
-		"delve", -- Go
-		"btop", --
+		"jq",
+		"im-select",
+		"delve",
+		"btop",
+		"qwen",
 	}
 	for _, item in ipairs(checks) do
 		local ok_exec, chosen = has_any_exec(item)

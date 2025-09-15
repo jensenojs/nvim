@@ -1,25 +1,37 @@
-# ai
+# AI 插件模块
 
-意图: AI 辅助, 使用 opencode.nvim, 和 minuet-ai.nvim
+意图: AI 辅助编程，集成虚拟文本建议和代码生成能力。
 
-原路径映射:
+## 插件列表
 
-- /Users/jensen/.config/nvim/lua/plugins/ai/minuet.lua
+### minuet.lua
+- 插件: `milanglacier/minuet-ai.nvim`
+- 仓库: https://github.com/milanglacier/minuet-ai.nvim
+- 功能: 提供 AI 虚拟文本建议，不与补全菜单冲突
+- 配置特点:
+  - 仅启用虚拟文本功能，避免与 PUM 干扰
+  - 支持多种 AI 提供商 (OpenAI, Claude, Gemini, Ollama, llama.cpp 等)
+  - 可自定义按键映射接受/拒绝建议
+  - 支持特定文件类型自动触发
 
-- <https://github.com/milanglacier/minuet-ai.nvim>
+### opencode.lua
+- 插件: `NickvanDyke/opencode.nvim`
+- 仓库: https://github.com/NickvanDyke/opencode.nvim
+- 功能: 提供 AI 代码生成和解释能力
+- 配置特点:
+  - 集成嵌入式终端用于交互
+  - 提供多种快捷键用于提问和获取 AI 帮助
+  - 支持会话管理
 
-- https://github.com/NickvanDyke/opencode.nvim
-- https://github.com/yetone/avante.nvim
-- https://github.com/gitsang/qwen-code.nvim
+## 使用说明
 
-## Minuet 集成说明(虚拟文本优先, 避免与 PUM 干扰)
+### Minuet 集成说明(虚拟文本优先, 避免与 PUM 干扰)
 
-本节基于 minuet-ai.nvim 官方文档整理, 目标：
+本集成基于 minuet-ai.nvim 官方文档整理, 目标：
+- 仅启用"AI Ghost Text(虚拟文本)", 不引入补全源, 确保 `<Tab>` 可在"仅当可见时"接受 AI 建议。
+- 与 blink.cmp 解耦；后续如需再作为补全源加入, 采用"手动触发"方式以避免时序/评分干扰。
 
-- 仅启用“AI Ghost Text(虚拟文本)”, 不引入补全源, 确保 `<Tab>` 可在“仅当可见时”接受 AI 建议。
-- 与 blink.cmp 解耦；后续如需再作为补全源加入, 采用“手动触发”方式以避免时序/评分干扰。
-
-### 1) 安装(lazy.nvim)
+#### 1) 安装(lazy.nvim)
 
 ```lua
 -- 文件：lua/plugins/ai/minuet.lua(已提供)
@@ -39,7 +51,7 @@ return {
       -- 可自定义按键(示例见下一小节)
       -- keymap = { accept = '<A-l>', accept_line = '<A-;>', accept_n_lines = '<A-\'>' }
     },
-    -- provider 与 model 示例见下文“提供商与 API Key 配置”
+    -- provider 与 model 示例见下文"提供商与 API Key 配置"
   },
   config = function(_, opts)
     local ok, minuet = pcall(require, 'minuet')
@@ -52,9 +64,9 @@ return {
 }
 ```
 
-> 说明：Minuet 无需本地守护进程, 纯 HTTP 请求, 避免了“server 为 nil”类初始化竞态。
+> 说明：Minuet 无需本地守护进程, 纯 HTTP 请求, 避免了"server 为 nil"类初始化竞态。
 
-### 2) 仅虚拟文本：按键映射与使用
+#### 2) 仅虚拟文本：按键映射与使用
 
 Minuet 暴露虚拟文本操作 API, 可用于自定义按键：
 
@@ -76,7 +88,7 @@ vim.keymap.set('i', '<A-e>', function() vt.action.dismiss() end, { silent = true
 vim.keymap.set('i', '<A-l>', function() vt.action.accept() end, { silent = true })
 ```
 
-> 若你暂时禁用 blink(甚至注释掉 `blink.lua`), 也可用下述“最小可用”的 `<Tab>` 接受映射：
+> 若你暂时禁用 blink(甚至注释掉 `blink.lua`), 也可用下述"最小可用"的 `<Tab>` 接受映射：
 
 ```lua
 -- 仅当虚拟文本可见时, 用 <Tab> 接受；否则退回插入真实 Tab
@@ -92,7 +104,7 @@ end, { expr = true, silent = true })
 
 当你重新启用 blink 时, 建议移除此全局 `<Tab>` expr 映射, 改走 blink 的内置链(见下)。
 
-### 3) 可选：与 blink.cmp 集成(手动触发推荐)
+#### 3) 可选：与 blink.cmp 集成(手动触发推荐)
 
 官方示例支持把 Minuet 作为 blink 源：
 
@@ -120,7 +132,7 @@ require('blink-cmp').setup {
 }
 ```
 
-若需要把“AI 态优先、`<Tab>` 接受”并入 blink 的 `<Tab>` 链, 做法是在 blink 的 `<Tab>` 链首添加：
+若需要把"AI 态优先、`<Tab>` 接受"并入 blink 的 `<Tab>` 链, 做法是在 blink 的 `<Tab>` 链首添加：
 
 ```lua
 local ok, vt = pcall(require, 'minuet.virtualtext')
@@ -129,7 +141,7 @@ if ok and vt.action.is_visible() then vt.action.accept(); return end
 
 从而实现：AI 态 → snippet 跳位 → PUM 导航 → Tabout 的短路顺序(参考 `completion/requirements.md`)。
 
-### 4) 提供商与 API Key 配置(示例)
+#### 4) 提供商与 API Key 配置(示例)
 
 Minuet 支持多家与 OpenAI 兼容接口(OpenAI、Claude、Gemini、Ollama、llama.cpp 等)。示例：
 
@@ -155,16 +167,15 @@ require('minuet').setup {
 
 密钥安全：不要把 API Key 写进仓库配置, 使用环境变量或本地不纳入版本管理的机制。
 
-### 5) 常见问题
+#### 5) 常见问题
 
-- 觉得“行首/换行时有延迟”：若使用 nvim-cmp 作为前端, 增大 `fetching_timeout`；blink 前端可用 `async + timeout_ms`。
+- 觉得"行首/换行时有延迟"：若使用 nvim-cmp 作为前端, 增大 `fetching_timeout`；blink 前端可用 `async + timeout_ms`。
 - PUM 总是被打扰：关闭 `virtualtext.auto_trigger_ft` 或仅在白名单文件类型开启；blink 侧关闭 `prefetch_on_insert`。
-- `<Tab>` 出现“双动作”或被覆盖：检查是否仍保留了前述“全局 `<Tab>` expr 映射”；与 blink 的链路只能二选一。
+- `<Tab>` 出现"双动作"或被覆盖：检查是否仍保留了前述"全局 `<Tab>` expr 映射"；与 blink 的链路只能二选一。
 
-### 6) 回归测试(对照 `completion/requirements.md`)
+#### 6) 回归测试(对照 `completion/requirements.md`)
 
 - AI 态(有虚拟文本)：`<Tab>` 接受；`<CR>` 正常回车；`<S-Tab>` 不用于 AI。
 - 候选态(PUM 可见)：`<Tab>/<S-Tab>` 导航；`<CR>` 确认候选。
 - 跳出态(成对符号边界)：`<Tab>`/`<S-Tab>` 触发 Tabout/TaboutBack；`<CR>` 正常换行。
 - 普通态：`<Tab>/<S-Tab>` 按你的缩进/退格预期；`<CR>` 正常换行。
-

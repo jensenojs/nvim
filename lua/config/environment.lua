@@ -21,6 +21,25 @@ M.has = {
 	fd = has("fd") or has("fdfind"),
 	nvr = has("nvr"),
 	im_select = has("im-select"),
+	btop = has("btop"),
+	qwen = has("qwen"),
+	opencode = has("opencode"),
+	uv = has("uv"),
+	python3 = has("python3"),
+	-- 为Python虚拟环境中的python添加检查
+	python_in_venv = function()
+		local env = require("config.environment")
+		for _, envkey in ipairs({ "VIRTUAL_ENV", "CONDA_PREFIX" }) do
+			local envdir = env[envkey]
+			if envdir and envdir ~= "" then
+				local p = envdir .. "/bin/python"
+				if has(p) then
+					return true
+				end
+			end
+		end
+		return false
+	end,
 }
 
 -- 离线/最小模式
@@ -30,14 +49,19 @@ M.minimal_mode = M.offline or not M.has.git
 
 function M.summary()
 	return string.format(
-		"offline=%s, minimal=%s, has(git=%s, rg=%s, fd=%s, nvr=%s, im-select=%s)",
+		"offline=%s, minimal=%s, has(git=%s, rg=%s, fd=%s, nvr=%s, im-select=%s, btop=%s, qwen=%s, opencode=%s, uv=%s, python3=%s)",
 		tostring(M.offline),
 		tostring(M.minimal_mode),
 		tostring(M.has.git),
 		tostring(M.has.rg),
 		tostring(M.has.fd),
 		tostring(M.has.nvr),
-		tostring(M.has.im_select)
+		tostring(M.has.im_select),
+		tostring(M.has.btop),
+		tostring(M.has.qwen),
+		tostring(M.has.opencode),
+		tostring(M.has.uv),
+		tostring(M.has.python3)
 	)
 end
 
@@ -54,6 +78,11 @@ local function compute()
 	t.modules_dir = t.vim_path .. path_sep .. "modules"
 	t.home = home
 	t.data_dir = string.format("%s/site/", vim.fn.stdpath("data"))
+	-- 添加对 Python 环境变量的访问
+	t.virtual_env = os.getenv("VIRTUAL_ENV")
+	t.conda_prefix = os.getenv("CONDA_PREFIX")
+	-- 添加对 PIP 代理的访问
+	t.pip_proxy = os.getenv("PIP_PROXY")
 	return t
 end
 
@@ -61,6 +90,10 @@ local data = compute()
 
 setmetatable(M, {
 	__index = function(_, k)
+		-- 对于函数类型的 has 项，需要特殊处理
+		if k == "has" then
+			return M.has
+		end
 		return data[k]
 	end,
 	__newindex = function(_, k, _)

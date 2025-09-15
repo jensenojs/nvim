@@ -24,12 +24,13 @@ local keymaps = {
 		:with_silent()
 		:with_desc("全局模糊搜索"),
 
-	["n|<leader>b"] = map_callback(function()
-			require("telescope.builtin").buffers()
-		end)
-		:with_noremap()
-		:with_silent()
-		:with_desc("打开缓冲区列表"),
+	-- 这个函数的耗时莫名其妙要很久, 不要用它了
+	-- ["n|<leader>b"] = map_callback(function()
+	-- 		require("telescope.builtin").buffers()
+	-- 	end)
+	-- 	:with_noremap()
+	-- 	:with_silent()
+	-- 	:with_desc("打开缓冲区列表"),
 
 	["n|<leader>g"] = map_callback(function()
 			require("telescope.builtin").git_status()
@@ -61,7 +62,7 @@ bind.nvim_load_mapping(keymaps)
 local preview_setting = function(filepath, bufnr, opts)
 	filepath = vim.fn.expand(filepath)
 	local previewers = require("telescope.previewers")
-	
+
 	-- 同步检查文件大小/存在性
 	local stat = vim.loop.fs_stat(filepath)
 	if not stat then
@@ -76,7 +77,7 @@ local preview_setting = function(filepath, bufnr, opts)
 		end)
 		return
 	end
-	
+
 	-- 同步检查 MIME 类型
 	local Job = require("plenary.job")
 	local mime_type
@@ -90,14 +91,14 @@ local preview_setting = function(filepath, bufnr, opts)
 			end
 		end,
 	}):sync()
-	
+
 	if mime_type and mime_type ~= "text" then
 		vim.schedule(function()
 			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { "BINARY" })
 		end)
 		return
 	end
-	
+
 	-- 正常预览
 	previewers.buffer_previewer_maker(filepath, bufnr, opts)
 end

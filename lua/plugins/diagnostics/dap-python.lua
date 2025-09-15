@@ -1,5 +1,5 @@
 -- https://github.com/mfussenegger/nvim-dap-python
--- 由 nvim-dap-python 接管 Python 的调试适配器与配置
+-- Not use : 由 nvim-dap-python 接管 Python 的调试适配器与配置
 return {
 	"mfussenegger/nvim-dap-python",
 	ft = { "python" },
@@ -97,3 +97,37 @@ return {
 }
 
 
+
+-- return {
+-- 	-- type = "executable", -- 不需要指定 type, 默认就是 executable
+-- 	command = (function()
+-- 		-- 1) 优先使用环境模块进行可执行文件检查
+-- 		local env = require("config.environment")
+
+-- 		-- 2) 其后才使用环境变量中的 venv
+-- 		for _, envkey in ipairs({ "VIRTUAL_ENV", "CONDA_PREFIX" }) do
+-- 			local envdir = env[envkey] -- 通过环境模块访问环境变量
+-- 			if envdir and envdir ~= "" then
+-- 				local p = envdir .. "/bin/python"
+-- 				-- 检查可执行文件是否存在 (直接使用 vim.fn.executable)
+-- 				if vim.fn.executable(p) == 1 then
+-- 					return p
+-- 				end
+-- 			end
+-- 		end
+
+-- 		-- 3) 若安装了 uv, 则交给 uv 处理(支持 per-project venv 管理)
+-- 		if env.has.uv then
+-- 			return "uv"
+-- 		end
+
+-- 		-- 4) 常规回退
+-- 		if env.has.python3 then
+-- 			return "python3"
+-- 		end
+
+-- 		-- 5) 最终兜底
+-- 		return "python"
+-- 	end)(),
+-- 	args = { "-m", "debugpy.adapter" },
+-- }

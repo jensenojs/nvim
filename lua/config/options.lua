@@ -151,7 +151,9 @@ opt.relativenumber = true
 opt.splitright = true
 opt.splitbelow = true
 
-if vim.fn.executable("nvr") == 1 then
+-- Check for nvr executable using the environment module
+local env = require("config.environment")
+if env.has.nvr then
 	vim.env.GIT_EDITOR = "nvr -cc split --remote-wait +'set bufhidden=wipe'"
 end
 

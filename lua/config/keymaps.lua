@@ -54,6 +54,32 @@ end
 local keymaps = {
 
 	-----------------
+	--  增强搜索   --
+	-----------------
+	["n|n"] = map_callback(function()
+			local cw = vim.fn.expand("<cword>") -- 光标下的单词
+			if cw == "" then
+				return
+			end -- 空行啥也不干
+			vim.fn.setreg("/", "\\<" .. cw .. "\\>") -- 整词匹配，去掉 \\< \\> 可部
+			vim.cmd("normal! n") -- 沿用系统搜索逻辑
+		end)
+		:with_noremap()
+		:with_silent()
+		:with_desc("向下找当前光标所在单词"),
+	["n|N"] = map_callback(function()
+			local cw = vim.fn.expand("<cword>")
+			if cw == "" then
+				return
+			end
+			vim.fn.setreg("/", "\\<" .. cw .. "\\>")
+			vim.cmd("normal! N")
+		end)
+		:with_noremap()
+		:with_silent()
+		:with_desc("向上找当前光标所在单词"),
+
+	-----------------
 	--  缓冲区管理   --
 	-----------------
 
@@ -81,7 +107,7 @@ local keymaps = {
 		:with_desc("删除当前buffer/若为最后一个则退出"),
 	["n|<leader>w"] = map_cr("w"):with_noremap():with_silent():with_desc("保存当前buffer"),
 	["n|<leader>W"] = map_cr("wa"):with_noremap():with_silent():with_desc("保存所有的buffer"),
-	["n|<leader>Q"] = map_cr("qa!"):with_noremap():with_silent():with_desc("强制退出neovim"),
+	["n|<leader>Q"] = map_cr("qa"):with_noremap():with_silent():with_desc("强制退出neovim"),
 
 	-----------------
 	--    可视模式  --
