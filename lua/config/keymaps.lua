@@ -50,6 +50,67 @@ local function copy_absolute_path()
 	vim.fn.setreg("+", abs)
 end
 
+-- :ShowKey  ——  调试任意按键的原始/修饰符
+local function show_key()
+	-- 清掉多余的 hit-enter 提示
+	vim.cmd('echo ""')
+	-- 让用户按一次键（不映射、不超时）
+	local ok, key = pcall(vim.fn.getcharstr)
+	if not ok then
+		return
+	end -- 用户 <Esc>/Ctrl-C 取消
+	local mod = vim.fn.getcharmod() -- 修饰符位掩码
+	local byte = vim.fn.char2nr(key) -- Unicode 码位
+
+	-- 位掩码解释
+	local mods = {}
+	if mod == 0 then
+		mods[#mods + 1] = "none"
+	else
+		if bit.band(mod, 1) ~= 0 then
+			mods[#mods + 1] = "Shift"
+		end
+		if bit.band(mod, 2) ~= 0 then
+			mods[#mods + 1] = "Alt"
+		end
+		if bit.band(mod, 4) ~= 0 then
+			mods[#mods + 1] = "Ctrl"
+		end
+		if bit.band(mod, 8) ~= 0 then
+			mods[#mods + 1] = "Super"
+		end
+	end
+
+	-- 拼成人类可读
+	local desc = table.concat(mods, "+")
+	if #mods > 0 and key ~= "" then
+		desc = desc .. "+"
+	end
+	desc = desc .. (key == " " and "Space" or key)
+
+	-- 如果支持 CSI-u，也给出对应序列
+	local csiu = ""
+	if byte > 0 then
+		csiu = string.format("  CSI-u: \\x1b[%d;%du", byte, mod == 0 and 1 or mod + 1)
+	end
+
+	-- 一次性打印
+	vim.api.nvim_echo({
+		{ "Raw key: ", "Question" },
+		{ string.format("%q", key), "String" },
+		{ "  |  code=", "Comment" },
+		{ tostring(byte), "Number" },
+		{ "  mod=", "Comment" },
+		{ tostring(mod), "Number" },
+		{ "  |  ", "Comment" },
+		{ desc, "Identifier" },
+		{ csiu, "Comment" },
+	}, false, {})
+end
+
+-- 注册成 Ex 命令
+vim.api.nvim_create_user_command("ShowKey", show_key, { desc = "Show raw key/modifier info" })
+
 -- 利用bind的辅助函数封装了vim.keymap.系列的函数
 local keymaps = {
 
@@ -178,6 +239,7 @@ local keymaps = {
 }
 
 bind.nvim_load_mapping(keymaps)
+
 require("config.quick_substitute").setup({})
 
 -----------------
@@ -194,64 +256,3 @@ pcall(vim.keymap.del, "n", "gri") -- Implementation
 pcall(vim.keymap.del, "n", "grt") -- Type Definition
 pcall(vim.keymap.del, "n", "gO") -- Document Symbol, will use <leader>o instead
 pcall(vim.keymap.del, "n", "<C-S>") -- Signature Help in Insert mode, will use <c-k> instead
-
--- :ShowKey  ——  调试任意按键的原始/修饰符
-local function show_key()
-	-- 清掉多余的 hit-enter 提示
-	vim.cmd('echo ""')
-	-- 让用户按一次键（不映射、不超时）
-	local ok, key = pcall(vim.fn.getcharstr)
-	if not ok then
-		return
-	end -- 用户 <Esc>/Ctrl-C 取消
-	local mod = vim.fn.getcharmod() -- 修饰符位掩码
-	local byte = vim.fn.char2nr(key) -- Unicode 码位
-
-	-- 位掩码解释
-	local mods = {}
-	if mod == 0 then
-		mods[#mods + 1] = "none"
-	else
-		if bit.band(mod, 1) ~= 0 then
-			mods[#mods + 1] = "Shift"
-		end
-		if bit.band(mod, 2) ~= 0 then
-			mods[#mods + 1] = "Alt"
-		end
-		if bit.band(mod, 4) ~= 0 then
-			mods[#mods + 1] = "Ctrl"
-		end
-		if bit.band(mod, 8) ~= 0 then
-			mods[#mods + 1] = "Super"
-		end
-	end
-
-	-- 拼成人类可读
-	local desc = table.concat(mods, "+")
-	if #mods > 0 and key ~= "" then
-		desc = desc .. "+"
-	end
-	desc = desc .. (key == " " and "Space" or key)
-
-	-- 如果支持 CSI-u，也给出对应序列
-	local csiu = ""
-	if byte > 0 then
-		csiu = string.format("  CSI-u: \\x1b[%d;%du", byte, mod == 0 and 1 or mod + 1)
-	end
-
-	-- 一次性打印
-	vim.api.nvim_echo({
-		{ "Raw key: ", "Question" },
-		{ string.format("%q", key), "String" },
-		{ "  |  code=", "Comment" },
-		{ tostring(byte), "Number" },
-		{ "  mod=", "Comment" },
-		{ tostring(mod), "Number" },
-		{ "  |  ", "Comment" },
-		{ desc, "Identifier" },
-		{ csiu, "Comment" },
-	}, false, {})
-end
-
--- 注册成 Ex 命令
-vim.api.nvim_create_user_command("ShowKey", show_key, { desc = "Show raw key/modifier info" })
